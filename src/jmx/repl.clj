@@ -11,7 +11,12 @@
              :type \"Memory\"
              :name \"xxx\"} translates to JMX bean name:
         java.lang:name=xxx,type=Memory
-"} wd (atom {}))
+"}
+  ;; java.lang:name=CMS Old Gen,type=MemoryPoll ->
+  ;; {:namespace java.lang
+  ;;  :name "CMS Old Gen"
+  ;;  :type "MemoryPool"}
+  wd (atom {}))
 
 (declare ls0 cat0 pwd0 wd->bean-name wd->path get-current-level 
          extract-namespaces extract-types extract-names extract-attributes
@@ -20,19 +25,19 @@
 (defn ls
   "Display the items in current direcoty."
   []
-  (let [depth (get-current-level)
+  (let [level (get-current-level)
         bean-prefix (wd->bean-name @wd)
         names     (ls0 bean-prefix)
-        names     (condp = depth
-                    ;; if current depth is root, show all the namespace
+        names     (condp = level
+                    ;; if current level is root, show all the namespace
                     :root (extract-namespaces names)
-                    ;; if current depth is namespace, show all the type
+                    ;; if current level is namespace, show all the type
                     :namespace (extract-types names)
-                    ;; if current depth is type, show all the names
+                    ;; if current level is type, show all the names
                     :type (extract-names names)
-                    :name (extract-attributes bean-prefix)
-                    )
-        color-fn (if (= depth :name)
+                    ;; if current level is name, show all the attributes
+                    :name (extract-attributes bean-prefix))
+        color-fn (if (= level :name)
                    color/yellow
                    (fn [& args] (color/blue (apply color/bold args))))]
     (doseq [name names]
@@ -49,11 +54,6 @@
   []
   (println (color/cyan (pwd0))))
 
-
-;; java.lang:name=CMS Old Gen,type=MemoryPoll ->
-;; {:namespace java.lang
-;;  :name "CMS Old Gen"
-;;  :type "MemoryPool"}
 (defn cd
   "Changes the working directory to the specified directory."
   [name]
@@ -63,22 +63,31 @@
                  (nil? (:type @wd)) :type
                  (nil? (:name @wd)) :name
                  true :error)]
-    (if (= :parent cd-type)
+    (condp = cd-type
+      ;; goto parent directory
+      :parent
       (cond
-       (not (nil? (:name @wd)))       (swap! wd #(dissoc % :name))
-       (not (nil? (:type @wd)))       (swap! wd #(dissoc % :type))
-       (not (nil? (:namespace @wd)))       (swap! wd #(dissoc % :namespace)))
-      (if (= :error cd-type)
-        (println "No such folder!!!")
-        (let [new-wd (assoc @wd cd-type name)
-              bean-name (wd->bean-name new-wd)
-              bean-exists? (bean-exists? bean-name)]
-          (if (= bean-exists? false)
-            (println "No such directory.")
-            (do
-              (if (and (= :type cd-type) (= 1 (bean-count bean-name)))
-                (swap! wd #(assoc % :name name)))
-              (swap! wd #(assoc % cd-type name)))))))))
+       (not (nil? (:name @wd))) (swap! wd #(dissoc % :name))
+       (not (nil? (:type @wd))) (swap! wd #(dissoc % :type))
+       (not (nil? (:namespace @wd))) (swap! wd #(dissoc % :namespace)))
+
+      ;; error
+      :error  (println "No such folder!")
+
+      ;; otherwise
+      (let [new-wd (assoc @wd cd-type name)
+            bean-name (wd->bean-name new-wd)
+            bean-exists? (bean-exists? bean-name)]
+        (if (not bean-exists?)
+          (println "No such directory!")
+          ;; the directory DID exists
+          (do
+            ;; if there is only one bean with this bean-name prefix
+            ;; and current cd-type is :type, then we add :name too
+            (if (and (= :type cd-type) (= 1 (bean-count bean-name)))
+              (swap! wd #(assoc % :name name)))
+            (swap! wd #(assoc % cd-type name))))))))
+
 (defn help []
   (let [help-text ["\t help -- print this help"
                    "\t ls   -- list the items in current directory"
