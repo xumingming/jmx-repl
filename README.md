@@ -4,13 +4,13 @@ A JMX client with a file system style. You use `ls` to check all the mbeans, use
 
 In `jmx-repl` the following jmx bean:
 
-```bash
+```clojure
 java.lang:type=MemoryPool,name=CMS Old Gen
 ```
 
 translates to the following path:
 
-```bash
+```clojure
 /java.lang/MemoryPool/CMS Old Gen
 ```
 i.e. in `jmx-repl`, `java.lang`, `MemoryPool`, `CMS Old Gen` are all directories, the attributes of this bean are "file" in `jmx-repl`.
