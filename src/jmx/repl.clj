@@ -97,6 +97,13 @@
   []
   (println (color/cyan (pwd0))))
 
+(defn bean-count [bean-name]
+  (count (jmx/mbean-names bean-name)))
+
+(defn bean-exists? [bean-name]
+  (> (bean-count bean-name) 0))
+
+
 ;; java.lang:name=CMS Old Gen,type=MemoryPoll ->
 ;; {:namespace java.lang
 ;;  :name "CMS Old Gen"
@@ -117,7 +124,16 @@
        (not (nil? (:namespace @wd)))       (swap! wd #(dissoc % :namespace)))
       (if (= :error cd-type)
         (println "No such folder!!!")
-        (swap! wd #(assoc % cd-type name)) ))))
+        (let [new-wd (assoc @wd cd-type name)
+              bean-name (wd->bean-name new-wd)
+              bean-exists? (bean-exists? bean-name)]
+          (println "name:" bean-name ", exists:" bean-exists?)
+          (if (= bean-exists? false)
+            (println "No such directory.")
+            (do
+              (if (and (= :type cd-type) (= 1 (bean-count bean-name)))
+                (swap! wd #(assoc % :name name)))
+              (swap! wd #(assoc % cd-type name)))))))))
 
 (defn wd->bean-name
   "Translates the wd data to a JMX bean name."
