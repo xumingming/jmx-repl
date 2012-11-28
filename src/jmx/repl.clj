@@ -94,11 +94,11 @@ of a file in a file system"}
             (swap! wd #(assoc % cd-type name))))))))
 
 (defn help []
-  (let [help-text ["\t help -- print this help"
-                   "\t ls   -- list the items in current directory"
-                   "\t cd   -- enter a folder"
-                   "\t cat  -- print the value of an item"
-                   "\t pwd  -- show the current path"
+  (let [help-text ["\t help             -- print this help"
+                   "\t ls               -- list the items in current directory"
+                   "\t cd <dir-name>    -- enter a directory(.. means parent directory)"
+                   "\t cat <file-name>  -- print the value of an item"
+                   "\t pwd              -- show the current path"
                    "\t exit -- exit"]]
     (doseq [ht help-text]
       (println (color/cyan ht)))))
