@@ -1,80 +1,109 @@
-(ns jmx.repl
+(ns ^{:author "xumingmingv"
+      :doc ""}
+  jmx.repl
   (require [clojure.java.jmx :as jmx]
            [clojure.string :as string]
            [colorize.core :as color]))
-(def wd (atom {}))
+
+(def ^{:doc
+       "This atom contains the current namespace, type, name we are working on
+       e.g. {:namespace \"java.lang\"
+             :type \"Memory\"
+             :name \"xxx\"} translates to JMX bean name:
+        java.lang:name=xxx,type=Memory
+"} wd (atom {}))
 
 (declare ls0 cat0 wd->bean-name wd->path)
-(defn get-current-depth []
+(defn get-current-level
+  "Returns which level we are operating at."
+  []
   (cond
    (nil? (:namespace @wd)) :root
    (nil? (:type @wd)) :namespace
    (nil? (:name @wd)) :type
    true :name))
 
-(defn extract-namespaces [names]
+(defn extract-namespaces
+  "Extracts namespaces from these object names."
+  [names]
   (sort (set (map (fn [name]
                     (let [real-name (string/split name #":")
                           real-name (first real-name)]
                       real-name)) names))))
 
-(defn extract-types [names]
+(defn extract-types
+  "Extracts types from these object names."
+  [names]
   (sort (set (map (fn [name]
                     (let [real-name (string/split name #":")
                           real-name (second real-name)
                           real-name (string/split real-name #",")
                           real-name (filter (fn [name]
                                               (.startsWith name "type=")) real-name)
-
                           real-name (first real-name)
                           real-name (.substring real-name 5)]
                       real-name)) names))))
 
-(defn extract-names [names]
+(defn extract-names
+  "Extracts name part('name=xxx') from these object names."
+  [names]
   (sort (set (map (fn [name]
                     (let [real-name (string/split name #":")
                           real-name (second real-name)
                           real-name (string/split real-name #",")
-
                           real-name (if (= 2 (count real-name))
                                       (filter (fn [name]
                                                 (.startsWith name "name=")) real-name)
                                       (filter (fn [name]
                                                 (.startsWith name "type=")) real-name))
-
                           real-name (first real-name)
                           real-name (.substring real-name 5)]
                       real-name)) names))))
-(defn extract-attributes [bean-prefix]
-  (sort (set (map name (jmx/attribute-names bean-prefix)))))
 
-(defn ls []
-  (let [depth (get-current-depth)
+(defn extract-attributes
+  "Extracts all the attribute name of a mbean."
+  [bean-name]
+  (sort (set (map name (jmx/attribute-names bean-name)))))
+
+(defn ls
+  "Display the items in current direcoty."
+  []
+  (let [depth (get-current-level)
         bean-prefix (wd->bean-name @wd)
         names     (ls0 bean-prefix)
         names     (condp = depth
-                      ;; if current depth is root, show all the namespace
-                      :root (extract-namespaces names)
-                      ;; if current depth is namespace, show all the type
-                      :namespace (extract-types names)
-                      ;; if current depth is type, show all the names
-                      :type (extract-names names)
-                      :name (extract-attributes bean-prefix)
-                      )]
+                    ;; if current depth is root, show all the namespace
+                    :root (extract-namespaces names)
+                    ;; if current depth is namespace, show all the type
+                    :namespace (extract-types names)
+                    ;; if current depth is type, show all the names
+                    :type (extract-names names)
+                    :name (extract-attributes bean-prefix)
+                    )]
     (doseq [name names]
       (println (color/cyan "\t" name)))))
 
-(defn cat [attr-name]
+(defn cat
+  "Displays the value of an item"
+  [attr-name]
   (let [attr-value (cat0 attr-name)]
     (println (color/blue attr-value))))
 
-(defn pwd []
+(defn pwd0 []
   (wd->path @wd))
+
+(defn pwd
+  "Displays the current working directory."
+  []
+  (println (color/cyan (pwd0))))
+
 ;; java.lang:name=CMS Old Gen,type=MemoryPoll ->
 ;; {:namespace java.lang
 ;;  :name "CMS Old Gen"
 ;;  :type "MemoryPool"}
-(defn cd [name]
+(defn cd
+  "Changes the working directory to the specified directory."
+  [name]
   (let [cd-type (cond
                  (= ".." name) :parent
                  (nil? (:namespace @wd)) :namespace
@@ -90,7 +119,9 @@
         (println "No such folder!!!")
         (swap! wd #(assoc % cd-type name)) ))))
 
-(defn wd->bean-name [wd]
+(defn wd->bean-name
+  "Translates the wd data to a JMX bean name."
+  [wd]
   (cond
    (nil? (:namespace wd)) "*:*"
    (nil? (:type wd)) (str (:namespace wd) ":*")
@@ -99,15 +130,14 @@
    true (str (:namespace wd) ":name=" (:name wd) ",type=" (:type wd))))
 
 (defn wd->path [wd]
+  "Translates the wd data to a file system like path.
+    e.g. /java.lang/Memory"
   (cond
    (nil? (:namespace wd)) "/"
    (nil? (:type wd)) (str "/" (:namespace wd))
    (nil? (:name wd)) (str "/" (:namespace wd) "/" (:type wd))
    (= (:name wd) (:type wd)) (str "/" (:namespace wd) "/" (:type wd))
    true (str "/" (:namespace wd) "/" (:type wd) "/" (:name wd) )))
-
-
-
 
 (defn cat0 [attr-name]
   (let [bean-fullname (wd->bean-name @wd)
@@ -142,8 +172,6 @@
       (catch Throwable e
         (println "ERROR: " e)))
 
-  (print (str "[" (color/green (pwd)) "] => "))
+  (print (str "[" (color/green (pwd0)) "] => "))
   (flush)
   (recur (read-line)))
-
-
