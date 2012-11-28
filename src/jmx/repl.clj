@@ -38,6 +38,10 @@ of a file in a file system"}
                     :type (extract-names names)
                     ;; if current level is name, show all the attributes
                     :name (extract-attributes bean-prefix))
+        ;; include the "parent" directory
+        names (if (= :root level)
+                names
+                (cons ".." names))
         color-fn (if (= level :name)
                    color/yellow
                    (fn [& args] (color/blue (apply color/bold args))))]
