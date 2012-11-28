@@ -17,7 +17,7 @@ i.e. in `jmx-repl`, `java.lang`, `MemoryPool`, `CMS Old Gen` are all directories
 
 ## Usage
 
-```bash
+```clojure
 xumingmingv:jmx-repl(git:master)$ lein repl
 REPL started; server listening on localhost port 44034
 	 help -- print this help
