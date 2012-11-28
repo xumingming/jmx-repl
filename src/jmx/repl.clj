@@ -93,10 +93,10 @@
                    "\t ls   -- list the items in current directory"
                    "\t cd   -- enter a folder"
                    "\t cat  -- print the value of an item"
-                   "\t pwd  -- show the current path"]]
+                   "\t pwd  -- show the current path"
+                   "\t exit -- exit"]]
     (doseq [ht help-text]
       (println (color/cyan ht)))))
-
 
 (defn- wd->path [wd]
   "Translates the wd data to a file system like path.
@@ -210,18 +210,19 @@
 ;; the MAIN loop
 (loop [input "help"]
   (try
-      (let [argv (string/split input #" ")
-        command (first argv)
-        argv (rest argv)]
-    (condp = command
-      "help" (help)
-      "ls" (ls)
-      "pwd" (pwd)
-      "cd" (apply cd argv)
-      "cat" (apply cat argv)
-      (help)))
-      (catch Throwable e
-        (println "ERROR: " e)))
+    (let [argv (string/split input #" ")
+          command (first argv)
+          argv (rest argv)]
+      (condp = command
+        "help" (help)
+        "ls" (ls)
+        "pwd" (pwd)
+        "cd" (apply cd argv)
+        "cat" (apply cat argv)
+        "exit" (System/exit 0)
+        (help)))
+    (catch Throwable e
+      (println "ERROR: " e)))
 
   (print (str "[" (color/green (pwd0)) "] => "))
   (flush)
