@@ -1,5 +1,6 @@
 (ns ^{:author "xumingmingv"
-      :doc ""}
+      :doc "Query jmx beans as easy as how you check content
+of a file in a file system"}
   jmx.repl
   (require [clojure.java.jmx :as jmx]
            [clojure.string :as string]
@@ -217,8 +218,8 @@
         "help" (help)
         "ls" (ls)
         "pwd" (pwd)
-        "cd" (apply cd argv)
-        "cat" (apply cat argv)
+        "cd" (cd (string/join " " argv))
+        "cat" (cat (string/join " " argv))
         "exit" (System/exit 0)
         (help)))
     (catch Throwable e
