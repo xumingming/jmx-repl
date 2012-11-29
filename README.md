@@ -15,6 +15,30 @@ translates to the following path:
 ```
 i.e. in `jmx-repl`, `java.lang`, `MemoryPool`, `CMS Old Gen` are all directories, the attributes of this bean are "file" in `jmx-repl`.
 
+## "Install"
+
+* Install [leiningen](https://github.com/technomancy/leiningen)
+* Clone the repo: 
+
+``` bash
+git clone https://github.com/xumingming/tair-repl.git
+```
+
+* Add `Clojars.org` to your `~/.m2/settings.xml`
+
+``` xml
+<repository>
+  <id>clojars.org</id>
+  <url>http://clojars.org/repo</url>
+</repository>
+```
+
+* Run
+
+``` clojure
+lein deps && lein repl
+``` 
+
 ## Usage
 
 ```clojure
