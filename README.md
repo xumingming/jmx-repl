@@ -21,7 +21,7 @@ i.e. in `jmx-repl`, `java.lang`, `MemoryPool`, `CMS Old Gen` are all directories
 * Clone the repo: 
 
 ``` bash
-git clone https://github.com/xumingming/tair-repl.git
+git clone https://github.com/xumingming/jmx-repl.git
 ```
 
 * Add `Clojars.org` to your `~/.m2/settings.xml`
